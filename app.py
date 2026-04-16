@@ -2,7 +2,8 @@ import curses
 from curses import wrapper
 from random import randint
 import time
-
+from snake import Snake
+from apple import Apple
 
 SNAKE_COLOR = 1
 APPLE_COLOR = 2
@@ -12,6 +13,12 @@ TICK = 0.1
 # ESCHAP = pause()
 
 def main(stdscr):
+    SNAKE = Snake(start=(4,0), direction=(0,1))
+    NB_APPLE = 7
+    APPLE = []
+    for i in range(NB_APPLE):
+        APPLE.append(Apple())
+    
     # ===== INIT CURSES =====
     curses.curs_set(0)
     curses.start_color()
@@ -29,10 +36,13 @@ def main(stdscr):
     side_bar = curses.newwin(3, width, 0, 0)
     side_bar.clear()
 
-    snake = [(5, 5),(4,5)]
-    direction = (0, 1)  # droite
-    apple = spawn_apple(win, snake)
+
+    
+
     xp = 0
+    # apple = spawn_apple(win, SNAKE.snake_body)
+    for apple in APPLE:
+        apple.spawn_apple(SNAKE.snake_body, (height, width))
 
     running = True
 
@@ -57,32 +67,31 @@ def main(stdscr):
             pass
 
 
-        direction = update_direction(key, direction)
+        SNAKE.direction = update_direction(key, SNAKE.direction)
 
-        new_head = move_snake(snake[0], direction)
+        new_head = move_snake(SNAKE.snake_body[0], SNAKE.direction)
 
-        if collision(new_head, snake, win):
+        if collision(new_head, SNAKE.snake_body, win):
             break
 
-        snake.insert(0, new_head)
+        SNAKE.snake_body.insert(0, new_head)
+        eat_apple = False
+        for apple in APPLE:
+            if new_head == apple.pos:
+                apple.spawn_apple(SNAKE.snake_body, (height, width))
+                xp += 100
+                SNAKE.snake_body.insert(0, new_head) # to conter .pop
 
-        if new_head == apple:
-            apple = spawn_apple(win, snake)
-            xp += 100
-        else:
-            snake.pop()
 
-        render(win, snake, apple, side_bar, xp)
+        SNAKE.snake_body.pop()
+
+
+        render(win, SNAKE.snake_body, APPLE, side_bar, xp, SNAKE.direction)
 
     game_over(stdscr)
 
 
-def spawn_apple(win, snake):
-    h, w = win.getmaxyx()
-    while True:
-        pos = (randint(1, h - 4), randint(1, w - 4))
-        if pos not in snake:
-            return pos
+
 
 
     
@@ -116,17 +125,18 @@ def collision(head, snake, win):
     return False
 
 
-def render(win, snake, apple, side, xp):
+def render(win, snake, apple, side, xp, debug):
     win.erase()
     win.box()
 
     for i, (y, x) in enumerate(snake):
         char = "X" if i == 0 else "x"
         win.addch(y, x, char, curses.color_pair(SNAKE_COLOR))
-        
-    win.addch(apple[0], apple[1], "O", curses.color_pair(APPLE_COLOR))
+    
+    for ap in apple:
+        win.addch(ap.pos[0], ap.pos[1], "O", curses.color_pair(APPLE_COLOR))
     win.refresh()
-    side.addstr(0,0,f"Point d'XP : {xp}")
+    side.addstr(0,0,f"XP : {xp}")
     side.refresh()
 
 
