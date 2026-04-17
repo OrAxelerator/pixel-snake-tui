@@ -4,7 +4,7 @@ from random import randint
 import time
 from snake import Snake
 from apple import Apple
-
+from homescreen import homeScreen
 SNAKE_COLOR = 1
 APPLE_COLOR = 2
 TICK = 0.1
@@ -14,9 +14,16 @@ TICK = 0.1
 
 def main(stdscr):
     while True:
-        result = game_loop(stdscr)
-        if result != "restart":
+        homescreen = homeScreen(stdscr)
+
+        if homescreen == "launch":
+            result = game_loop(stdscr)
+            if result != "restart":
+                break
+
+        elif homescreen == "quit":
             break
+            
             
 
     
@@ -75,7 +82,7 @@ def game_loop(stdscr):
         # ===== INIT CURSES =====
         curses.curs_set(0)
         curses.start_color()
-        curses.init_pair(SNAKE_COLOR, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        curses.init_pair(SNAKE.snake_color, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(APPLE_COLOR, curses.COLOR_RED, curses.COLOR_BLACK)
 
         stdscr.nodelay(True)
