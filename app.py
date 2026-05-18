@@ -7,9 +7,9 @@ from apple import Apple
 from homescreen import homeScreen
 import json
 from pathlib import Path
+from platformdirs import user_data_dir
 
-PACKAGE_DIR = Path(__file__).resolve().parent
-DATA_DIR = PACKAGE_DIR / "data.json"
+DATA_DIR = Path(user_data_dir("pixel-snake-tui", "OrAxelerator")) / "data.json"
 
 SNAKE_COLOR = 1
 APPLE_COLOR = 2
@@ -21,6 +21,20 @@ SIDE_BAR_HEIGHT = 3
 
 # q = game_over
 # ESCHAP = pause()
+
+def load_data():
+    DATA_DIR.parent.mkdir(parents=True, exist_ok=True)
+    if not DATA_DIR.exists():
+        DATA_DIR.write_text(json.dumps({"bestScore": 0}))
+
+    with open(DATA_DIR, "r") as f:
+        return json.load(f)
+
+
+def save_data(data):
+    DATA_DIR.parent.mkdir(parents=True, exist_ok=True)
+    with open(DATA_DIR, "w") as f:
+        json.dump(data, f)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -83,7 +97,6 @@ def render(win, snake, apple, side, xp, direction, collision, tick, score):
 
     side.erase()
     side.box()
-    
     mode = "off" if collision else "on"
     dy, dx = direction
     direction_name = {
@@ -99,6 +112,7 @@ def render(win, snake, apple, side, xp, direction, collision, tick, score):
     safe_addstr(side, 1, 2, f"XP {xp}", curses.color_pair(INFO_COLOR))
     safe_addstr(side, 1, 14, f"LEN {len(snake)}", curses.color_pair(SNAKE_COLOR))
     safe_addstr(side, 1, 28, f"APPLE {len(apple)}", curses.color_pair(APPLE_COLOR))
+    safe_addstr(side, 1, 43, f"SPEED {speed}/s", curses.color_pair(INFO_COLOR))
     safe_addstr(side, 1, 61, f"COLLISION {mode}", curses.color_pair(MODE_COLOR))
     safe_addstr(side, 1, 77, f"BEST {score}", curses.color_pair(INFO_COLOR))
     safe_addstr(side, 2, 2, f"DIR {direction_name} | q quit | r restart | esc pause", curses.color_pair(INFO_COLOR))
@@ -116,8 +130,7 @@ def game_over(stdscr, snake, bestScore):
         stdscr.addstr(2, 0, f"Old : {bestScore}", curses.color_pair(INFO_COLOR))
         stdscr.refresh()
 
-        with open(DATA_DIR, "w") as f:
-            json.dump({"bestScore":snake}, f)
+        save_data({"bestScore": snake})
 
     while True:
         key = stdscr.getch()
@@ -155,8 +168,7 @@ def game_loop(stdscr, nbAplle, collision):
         side_bar.clear()
 
 
-        with open(DATA_DIR, "r") as f:
-            data = json.load(f)
+        data = load_data()
 
         bestScore = data["bestScore"]
 
