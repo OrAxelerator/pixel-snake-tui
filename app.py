@@ -112,9 +112,9 @@ def render(win, snake, apple, side, xp, direction, collision, tick, score):
     safe_addstr(side, 1, 2, f"XP {xp}", curses.color_pair(INFO_COLOR))
     safe_addstr(side, 1, 14, f"LEN {len(snake)}", curses.color_pair(SNAKE_COLOR))
     safe_addstr(side, 1, 28, f"APPLE {len(apple)}", curses.color_pair(APPLE_COLOR))
-    safe_addstr(side, 1, 61, f"COLLISION {mode}", curses.color_pair(MODE_COLOR))
-    safe_addstr(side, 1, 77, f"BEST {score}", curses.color_pair(INFO_COLOR))
-    safe_addstr(side, 2, 2, f"DIR {direction_name} | q quit | r restart | esc pause", curses.color_pair(INFO_COLOR))
+    safe_addstr(side, 1, 43, f"COLLISION {mode}", curses.color_pair(MODE_COLOR))
+    safe_addstr(side, 1, 61, f"BEST {score}", curses.color_pair(INFO_COLOR))
+    safe_addstr(side, 2, 2, f" DIR {direction_name} | q quit | r restart | esc pause ", curses.color_pair(INFO_COLOR))
     side.refresh()
 
 
