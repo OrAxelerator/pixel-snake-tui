@@ -1,23 +1,42 @@
+import argparse
 import curses
 from curses import wrapper
-from random import randint
 import time
 from snake import Snake
 from apple import Apple
 from homescreen import homeScreen
+import json
+from pathlib import Path
+
+PACKAGE_DIR = Path(__file__).resolve().parent
+DATA_DIR = PACKAGE_DIR / "data.json"
+
 SNAKE_COLOR = 1
 APPLE_COLOR = 2
+INFO_COLOR = 3
+MODE_COLOR = 4
+GAME_OVER_COLOR = 9
 TICK = 0.1
+SIDE_BAR_HEIGHT = 3
 
 # q = game_over
 # ESCHAP = pause()
 
-def main(stdscr):
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-apple", type=int, default=1)
+    parser.add_argument("-no-colision", action="store_true")
+    return parser.parse_args()
+
+
+def main(stdscr, args):
+    curses.curs_set(0)
+    
     while True:
         homescreen = homeScreen(stdscr)
 
         if homescreen == "launch":
-            result = game_loop(stdscr)
+            result = game_loop(stdscr, args.apple, collision=args.no_colision)
             if result != "restart":
                 break
 
@@ -28,22 +47,29 @@ def main(stdscr):
 
     
 
-def update_direction(key, current):
+def update_direction(key, current): # HJKL => VIM keybind
     dy, dx = current
-    if key == curses.KEY_UP and dy != 1:
+    if key in (curses.KEY_UP, ord('k'), ord('K')) and dy != 1:
         return (-1, 0)
-    if key == curses.KEY_DOWN and dy != -1:
+    if key in (curses.KEY_DOWN, ord('j'), ord('J')) and dy != -1:
         return (1, 0)
-    if key == curses.KEY_LEFT and dx != 1:
+    if key in (curses.KEY_LEFT, ord('h'), ord('H')) and dx != 1:
         return (0, -1)
-    if key == curses.KEY_RIGHT and dx != -1:
+    if key in (curses.KEY_RIGHT, ord('l'), ord('L')) and dx != -1:
         return (0, 1)
     return current
 
 
 
 
-def render(win, snake, apple, side, xp, debug):
+def safe_addstr(win, y, x, text, color=0):
+    height, width = win.getmaxyx()
+    if y < 0 or y >= height or x >= width:
+        return
+    win.addstr(y, x, text[:max(0, width - x - 1)], color)
+
+
+def render(win, snake, apple, side, xp, direction, collision, tick, score):
     win.erase()
     win.box()
 
@@ -54,27 +80,57 @@ def render(win, snake, apple, side, xp, debug):
     for ap in apple:
         win.addch(ap.pos[0], ap.pos[1], "O", curses.color_pair(APPLE_COLOR))
     win.refresh()
-    side.addstr(0,0,f"XP : {xp}")
+
+    side.erase()
+    side.box()
+    speed = round(1 / tick, 1)
+    mode = "off" if collision else "on"
+    dy, dx = direction
+    direction_name = {
+        (-1, 0): "↑",
+        (1, 0): "↓",
+        (0, -1): "←",
+        (0, 1): "→",
+    }.get((dy, dx), "NONE")
+
+    
+
+    safe_addstr(side, 0, 2, " PIXEL SNAKE ", curses.color_pair(MODE_COLOR))
+    safe_addstr(side, 1, 2, f"XP {xp}", curses.color_pair(INFO_COLOR))
+    safe_addstr(side, 1, 14, f"LEN {len(snake)}", curses.color_pair(SNAKE_COLOR))
+    safe_addstr(side, 1, 28, f"APPLE {len(apple)}", curses.color_pair(APPLE_COLOR))
+    safe_addstr(side, 1, 43, f"SPEED {speed}/s", curses.color_pair(INFO_COLOR))
+    safe_addstr(side, 1, 61, f"COLLISION {mode}", curses.color_pair(MODE_COLOR))
+    safe_addstr(side, 1, 77, f"BEST {score}", curses.color_pair(INFO_COLOR))
+    safe_addstr(side, 2, 2, f"DIR {direction_name} | q quit | r restart | esc pause", curses.color_pair(INFO_COLOR))
     side.refresh()
 
 
-def game_over(stdscr):
+def game_over(stdscr, snake, bestScore):
     stdscr.nodelay(False)
     stdscr.clear()
-    stdscr.addstr(0, 0, "GAME OVER - Press [r] to restart or [q] to quit")
+    curses.init_pair(GAME_OVER_COLOR, curses.COLOR_RED, curses.COLOR_BLACK)
+    stdscr.addstr(0, 0, "GAME OVER - Press [r] to restart or [q] to quit", curses.color_pair(GAME_OVER_COLOR))
     stdscr.refresh()
+    if snake > bestScore:
+        stdscr.addstr(1, 0, f"NEW RECORD : {snake}", curses.color_pair(MODE_COLOR))
+        stdscr.addstr(2, 0, f"Old : {bestScore}", curses.color_pair(INFO_COLOR))
+        stdscr.refresh()
+
+        with open(DATA_DIR, "w") as f:
+            json.dump({"bestScore":snake}, f)
 
     while True:
         key = stdscr.getch()
         if key in (ord('q'), ord('Q')):
             return "quit"
-        elif key in (ord('r'), ord('R')):
+        elif key in (ord('r'), ord('R'), curses.KEY_ENTER, 10, 13):
             return "restart"
     
 
-def game_loop(stdscr):
-        SNAKE = Snake(start=(4,0), direction=(0,1))
-        NB_APPLE = 3
+def game_loop(stdscr, nbAplle, collision):
+        SNAKE = Snake(start=(4,4), direction=(0,1), collision=collision)
+        NB_APPLE = nbAplle
         APPLE = []
         for i in range(NB_APPLE):
             APPLE.append(Apple())
@@ -84,25 +140,31 @@ def game_loop(stdscr):
         curses.start_color()
         curses.init_pair(SNAKE.snake_color, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(APPLE_COLOR, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(INFO_COLOR, curses.COLOR_CYAN, curses.COLOR_BLACK)
+        curses.init_pair(MODE_COLOR, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
         stdscr.nodelay(True)
         stdscr.keypad(True)
 
         height, width = stdscr.getmaxyx()
-        win = curses.newwin(height - 2, width, 2, 0)
+        win = curses.newwin(height - SIDE_BAR_HEIGHT, width, SIDE_BAR_HEIGHT, 0)
         win.nodelay(True)
         win.keypad(True)
+        game_size = win.getmaxyx()
 
-        side_bar = curses.newwin(3, width, 0, 0)
+        side_bar = curses.newwin(SIDE_BAR_HEIGHT, width, 0, 0)
         side_bar.clear()
 
 
-        
+        with open(DATA_DIR, "r") as f:
+            data = json.load(f)
+
+        bestScore = data["bestScore"]
 
         xp = 0
         # spawn apple init
         for apple in APPLE:
-            apple.spawn_apple(SNAKE.snake_body, (height, width))
+            apple.spawn_apple(SNAKE.snake_body, game_size)
 
         running = True
 
@@ -120,9 +182,9 @@ def game_loop(stdscr):
                         stdscr.nodelay(True)
                         break
             elif key in (ord('q'), ord('Q')):
-                break
-            elif key in (ord('r'), ord('R')):
-                pass
+                return "quit"
+            elif key in (ord('r'), ord('R')) :
+                return "restart"
             else:
                 pass
 
@@ -131,13 +193,16 @@ def game_loop(stdscr):
 
             new_head = SNAKE.move()
 
-            if SNAKE.colision(new_head, (height, width)):
+            if collision:
+                new_head = SNAKE.wrap_head(new_head, game_size)
+
+            if SNAKE.isCollision(new_head, game_size):
                 break
 
             SNAKE.snake_body.insert(0, new_head)
             for apple in APPLE:
                 if new_head == apple.pos:
-                    apple.spawn_apple(SNAKE.snake_body, (height, width))
+                    apple.spawn_apple(SNAKE.snake_body, game_size)
                     xp += 100
                     SNAKE.snake_body.insert(0, new_head) # to conter .pop
 
@@ -145,8 +210,12 @@ def game_loop(stdscr):
             SNAKE.snake_body.pop()
 
 
-            render(win, SNAKE.snake_body, APPLE, side_bar, xp, SNAKE.direction)
+            render(win, SNAKE.snake_body, APPLE, side_bar, xp, SNAKE.direction, collision, TICK, bestScore)
 
-        return game_over(stdscr)
+        return game_over(stdscr, len(SNAKE.snake_body), bestScore)
 
-wrapper(main)
+
+
+def run():
+    args = parse_args()
+    wrapper(lambda stdscr: main(stdscr, args))
