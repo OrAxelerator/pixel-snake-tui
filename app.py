@@ -12,7 +12,12 @@ from platformdirs import user_data_dir
 DATA_DIR = Path(user_data_dir("pixel-snake-tui", "OrAxelerator")) / "data.json"
 
 SNAKE_COLOR = 1
-APPLE_COLOR = 2
+APPLE_COLOR = {
+    "normal":2,
+    "gold":4,
+    "uranium":1,
+    "glitch":3
+}
 INFO_COLOR = 3
 MODE_COLOR = 4
 GAME_OVER_COLOR = 9
@@ -61,16 +66,16 @@ def main(stdscr, args):
 
     
 
-def update_direction(key, current): # HJKL => VIM keybind
+def update_direction(key, current, glitch=False): # HJKL => VIM keybind
     dy, dx = current
     if key in (curses.KEY_UP, ord('k'), ord('K')) and dy != 1:
-        return (-1, 0)
+        return (1, 0) if glitch else (-1, 0)
     if key in (curses.KEY_DOWN, ord('j'), ord('J')) and dy != -1:
-        return (1, 0)
+        return (-1, 0) if glitch else (1, 0)
     if key in (curses.KEY_LEFT, ord('h'), ord('H')) and dx != 1:
-        return (0, -1)
+        return (0, 1) if glitch else (0, -1)
     if key in (curses.KEY_RIGHT, ord('l'), ord('L')) and dx != -1:
-        return (0, 1)
+        return (0, -1) if glitch else (0,1)
     return current
 
 
@@ -92,7 +97,12 @@ def render(win, snake, apple, side, xp, direction, collision, tick, score):
         win.addch(y, x, char, curses.color_pair(SNAKE_COLOR))
     
     for ap in apple:
-        win.addch(ap.pos[0], ap.pos[1], "O", curses.color_pair(APPLE_COLOR))
+        # input(ap.type) # lsite ["normal"]
+        # input(APPLE_COLOR) # dict
+        # input(APPLE_COLOR["normal"]) # 2
+        typ = ap.type
+        # input(typ)
+        win.addch(ap.pos[0], ap.pos[1], "O", curses.color_pair(APPLE_COLOR[typ]))
     win.refresh()
 
     side.erase()
@@ -111,8 +121,8 @@ def render(win, snake, apple, side, xp, direction, collision, tick, score):
     safe_addstr(side, 0, 2, " PIXEL SNAKE ", curses.color_pair(MODE_COLOR))
     safe_addstr(side, 1, 2, f"XP {xp}", curses.color_pair(INFO_COLOR))
     safe_addstr(side, 1, 14, f"LEN {len(snake)}", curses.color_pair(SNAKE_COLOR))
-    safe_addstr(side, 1, 28, f"APPLE {len(apple)}", curses.color_pair(APPLE_COLOR))
-    safe_addstr(side, 1, 43, f"COLLISION {mode}", curses.color_pair(MODE_COLOR))
+    safe_addstr(side, 1, 28, f"APPLE {len(apple)}", curses.color_pair(APPLE_COLOR["normal"]))
+    safe_addstr(side, 1, 43, f"COLISION {mode}", curses.color_pair(MODE_COLOR))
     safe_addstr(side, 1, 61, f"BEST {score}", curses.color_pair(INFO_COLOR))
     safe_addstr(side, 2, 2, f" DIR {direction_name} | q quit | r restart | esc pause ", curses.color_pair(INFO_COLOR))
     side.refresh()
@@ -145,12 +155,14 @@ def game_loop(stdscr, nbAplle, collision):
         APPLE = []
         for i in range(NB_APPLE):
             APPLE.append(Apple())
+
+        glitch_until = 0
         
         # ===== INIT CURSES =====
         curses.curs_set(0)
         curses.start_color()
         curses.init_pair(SNAKE.snake_color, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        curses.init_pair(APPLE_COLOR, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(APPLE_COLOR["normal"], curses.COLOR_RED, curses.COLOR_BLACK)
         curses.init_pair(INFO_COLOR, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(MODE_COLOR, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
@@ -198,8 +210,8 @@ def game_loop(stdscr, nbAplle, collision):
             else:
                 pass
 
-
-            SNAKE.direction = update_direction(key, SNAKE.direction)
+            glitched = time.time() < glitch_until
+            SNAKE.direction = update_direction(key, SNAKE.direction, glitched)
 
             new_head = SNAKE.move()
 
@@ -212,11 +224,26 @@ def game_loop(stdscr, nbAplle, collision):
             SNAKE.snake_body.insert(0, new_head)
             for apple in APPLE:
                 if new_head == apple.pos:
+                    
+                    if apple.type == "normal":
+                        xp += 100
+                        SNAKE.snake_body.insert(0, new_head) # to conter .pop
+                    elif apple.type == "gold":
+                        xp += 200
+                        SNAKE.snake_body.insert(0, new_head) # to conter .pop
+                        SNAKE.snake_body.insert(0, new_head) # to conter .pop
+                    elif apple.type == "uranium":
+                        xp -= 200
+                        if len(SNAKE.snake_body) > 2: # cause end : onather pop
+                            SNAKE.snake_body.pop()
+                    elif apple.type == "glitch" :
+                        xp += 100
+                        glitch_until = time.time() + 5
+
+                    apple.type = apple.init_type() # Change type
                     apple.spawn_apple(SNAKE.snake_body, game_size)
-                    xp += 100
-                    SNAKE.snake_body.insert(0, new_head) # to conter .pop
 
-
+            
             SNAKE.snake_body.pop()
 
 
