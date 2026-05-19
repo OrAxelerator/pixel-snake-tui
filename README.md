@@ -6,10 +6,24 @@ Snake mais dans le terminal.
 
 ## Installation
 
+- Sur Macos :
 ```bash
 git clone https://OrAxelerator/pixel-snake-tui.git
 cd pixel-snake-tui
 pip install -e .
+```
+
+- Sur Linux pip peut installez mais je conseille pipx
+> Installaton pipx sur linux :
+>  sudo apt install pipx
+>  pipx ensurepath
+>  pipx install .
+
+- Sur Windows : 
+```bash
+git clone https://OrAxelerator/pixel-snake-tui.git
+cd pixel-snake-tui
+python -m pip install .
 ```
 
 ## Lancement
