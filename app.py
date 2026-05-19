@@ -193,7 +193,8 @@ def game_loop(stdscr, nbAplle, collision):
         while running:
             time.sleep(TICK)
             key = stdscr.getch()
-            curses.set_escdelay(25)
+            if hasattr(curses, "set_escdelay"):
+                curses.set_escdelay(25)
             if key == 27: 
                 stdscr.nodelay(False) 
                 while True:
