@@ -4,6 +4,28 @@ MENU_TITLE_COLOR = 6
 MENU_SELECTED_COLOR = 7
 MENU_OPTION_COLOR = 8
 
+
+
+def draw_box(win):
+    h, w = win.getmaxyx()
+
+    # lignes horizontales
+    for x in range(w - 1):
+        win.addch(0, x, "─")
+        win.addch(h - 1, x, "─")
+
+    # lignes verticales
+    for y in range(1, h - 1):
+        win.addch(y, 0, "│")
+        win.addch(y, w - 2, "│")
+
+    # coins
+    win.addch(0, 0, "┌")
+    win.addch(0, w - 2, "┐")
+    win.addch(h - 1, 0, "└")
+    win.addch(h - 1, w - 2, "┘")
+
+
 def homeScreen(stdscr):
     stdscr.clear()
     curses.start_color()
@@ -16,7 +38,7 @@ def homeScreen(stdscr):
     win = curses.newwin(height, width, 0, 0)
     win.keypad(True)
     win.attron(curses.color_pair(MENU_BORDER_COLOR))
-    win.border()
+    draw_box(win)
     win.attroff(curses.color_pair(MENU_BORDER_COLOR))
     title = " PIXEL SNAKE "
     win.addstr(0, max(1, width // 2 - len(title) // 2), title, curses.color_pair(MENU_TITLE_COLOR))

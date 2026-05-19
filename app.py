@@ -4,7 +4,7 @@ from curses import wrapper
 import time
 from snake import Snake
 from apple import Apple
-from homescreen import homeScreen
+from homescreen import homeScreen, draw_box
 import json
 from pathlib import Path
 from platformdirs import user_data_dir
@@ -102,7 +102,7 @@ def safe_addstr(win, y, x, text, color=0):
 
 def render(win, snake, apple, side, xp, direction, collision, tick, score, glitched=False):
     win.erase()
-    win.box()
+    draw_box(win)
 
     for i, (y, x) in enumerate(snake):
         char = "X" if i == 0 else "x"
@@ -118,7 +118,7 @@ def render(win, snake, apple, side, xp, direction, collision, tick, score, glitc
     win.refresh()
 
     side.erase()
-    side.box()
+    draw_box(side)
     mode = "off" if collision else "on"
     dy, dx = direction
     direction_name = {
