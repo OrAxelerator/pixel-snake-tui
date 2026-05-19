@@ -44,14 +44,37 @@ git clone https://github.com/OrAxelerator/pixel-snake-tui.git
 cd pixel-snake-tui
 python -m pip install .
 ```
+Pour rajouter snake.exe au path (et pouvoir lancer `snake` depuis n'importe où) copiez ceci dans un terminal et tapez entré :
+
+```powershell
+$pythonScripts = python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+
+[Environment]::SetEnvironmentVariable(
+    "Path",
+    $env:Path + ";$pythonScripts",
+    "User"
+)
+```
+**Redémarrez ensuite le terminal.**
+
+Si le dossier `Scripts` n'est pas dans le `PATH`, utilisez :
+
+```bash
+python -m snake
+```
+
 
 ---
 
 ##  Lancement
 
-```bash
-snake
-```
+>[!IMPORTANT]
+>
+> ```bash
+> snake
+> ```
+
+
 
 ### Options
 
@@ -87,6 +110,11 @@ Il existe différents types de pommes :
 
 ---
 
+Lancement mode débug : 
+python -c "import app; app.run()"
+
+---
+
 ##  Inspiration
 
 Issu de cette vidéo :  
@@ -97,4 +125,3 @@ https://www.youtube.com/watch?v=lziU_yT0iDc
 ##  Licence
 
 [LICENSE MIT](./LICENSE.md)
-EOF
