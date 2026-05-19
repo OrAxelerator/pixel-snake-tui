@@ -66,16 +66,28 @@ def main(stdscr, args):
 
     
 
-def update_direction(key, current, glitch=False): # HJKL => VIM keybind
+def update_direction(key, current, glitched=False):
+    if glitched:
+        if key in (curses.KEY_UP, ord('k'), ord('K')):
+            key = curses.KEY_DOWN
+        elif key in (curses.KEY_DOWN, ord('j'), ord('J')):
+            key = curses.KEY_UP
+        elif key in (curses.KEY_LEFT, ord('h'), ord('H')):
+            key = curses.KEY_RIGHT
+        elif key in (curses.KEY_RIGHT, ord('l'), ord('L')):
+            key = curses.KEY_LEFT
+
     dy, dx = current
+
     if key in (curses.KEY_UP, ord('k'), ord('K')) and dy != 1:
-        return (1, 0) if glitch else (-1, 0)
+        return (-1, 0)
     if key in (curses.KEY_DOWN, ord('j'), ord('J')) and dy != -1:
-        return (-1, 0) if glitch else (1, 0)
+        return (1, 0)
     if key in (curses.KEY_LEFT, ord('h'), ord('H')) and dx != 1:
-        return (0, 1) if glitch else (0, -1)
+        return (0, -1)
     if key in (curses.KEY_RIGHT, ord('l'), ord('L')) and dx != -1:
-        return (0, -1) if glitch else (0,1)
+        return (0, 1)
+
     return current
 
 
@@ -88,13 +100,13 @@ def safe_addstr(win, y, x, text, color=0):
     win.addstr(y, x, text[:max(0, width - x - 1)], color)
 
 
-def render(win, snake, apple, side, xp, direction, collision, tick, score):
+def render(win, snake, apple, side, xp, direction, collision, tick, score, glitched=False):
     win.erase()
     win.box()
 
     for i, (y, x) in enumerate(snake):
         char = "X" if i == 0 else "x"
-        win.addch(y, x, char, curses.color_pair(SNAKE_COLOR))
+        win.addch(y, x, char, curses.color_pair(APPLE_COLOR["glitch"] if glitched else SNAKE_COLOR))
     
     for ap in apple:
         # input(ap.type) # lsite ["normal"]
@@ -239,7 +251,7 @@ def game_loop(stdscr, nbAplle, collision):
                             SNAKE.snake_body.pop()
                     elif apple.type == "glitch" :
                         xp += 100
-                        glitch_until = time.time() + 5
+                        glitch_until = time.time() + 1 # 1s glitch
 
                     apple.type = apple.init_type() # Change type
                     apple.spawn_apple(SNAKE.snake_body, game_size)
@@ -248,7 +260,7 @@ def game_loop(stdscr, nbAplle, collision):
             SNAKE.snake_body.pop()
 
 
-            render(win, SNAKE.snake_body, APPLE, side_bar, xp, SNAKE.direction, collision, TICK, bestScore)
+            render(win, SNAKE.snake_body, APPLE, side_bar, xp, SNAKE.direction, collision, TICK, bestScore, glitched=glitched)
 
         return game_over(stdscr, len(SNAKE.snake_body), bestScore)
 

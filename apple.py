@@ -14,7 +14,7 @@ class Apple:
 
         typ = choices(
             population=AppleType,
-            weights=(60, 20, 10, 10),
+            weights=(65, 20, 5, 10),
             k=1
         )        
         return typ[0] # cause it's a array["string"]

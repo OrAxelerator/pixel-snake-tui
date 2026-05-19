@@ -1,38 +1,59 @@
-# Snake TUI
+# 🐍 Snake TUI
 
-Snake mais dans le terminal.
+> Snake mais dans le terminal.
 
-![](./gameplay.png)
+<p align="center">
+  <img src="./gameplay.png" width="700">
+</p>
 
-## Installation
+---
 
-- Sur Macos :
+## 📦 Installation
+
+### Sur MacOS
+
 ```bash
-git clone https://OrAxelerator/pixel-snake-tui.git
+git clone https://github.com/OrAxelerator/pixel-snake-tui.git
 cd pixel-snake-tui
 pip install -e .
 ```
 
-- Sur Linux pip peut installez mais je conseille pipx
-> Installaton pipx sur linux :
->  sudo apt install pipx
->  pipx ensurepath
->  pipx install .
+### Sur Linux
 
-- Sur Windows : 
+`pip` peut installer le jeu, mais `pipx` est recommandé.
+
+Installation de `pipx` :
+
 ```bash
-git clone https://OrAxelerator/pixel-snake-tui.git
+sudo apt install pipx
+pipx ensurepath
+```
+
+Puis :
+
+```bash
+git clone https://github.com/OrAxelerator/pixel-snake-tui.git
+cd pixel-snake-tui
+pipx install .
+```
+
+### Sur Windows
+
+```bash
+git clone https://github.com/OrAxelerator/pixel-snake-tui.git
 cd pixel-snake-tui
 python -m pip install .
 ```
 
-## Lancement
+---
+
+##  Lancement
 
 ```bash
 snake
 ```
 
-Options :
+### Options
 
 ```bash
 snake -apple 4
@@ -40,20 +61,40 @@ snake -no-colision
 snake -apple 4 -no-colision
 ```
 
-Touches :
+---
 
-- Fleches ou `h` `j` `k` `l` : deplacer le serpent
+##  Touches
+
+- Fleches ou `h` `j` `k` `l` : déplacer le serpent
 - `esc` : pause
 - `r` : relancer
 - `q` : quitter
 
-Devrait marcher sur tous les OS, sauf peut-etre Windows.
+> Devrait marcher sur tous les OS, sauf peut-être Windows.
 
 ---
 
-Issu de cette video : https://www.youtube.com/watch?v=lziU_yT0iDc
+##  Pommes
 
+Il existe différents types de pommes :
+
+| Type | Effet |
+|------|--------|
+| 🔴 Rouge | pomme normale `+1` |
+| 🟡 Jaune | pomme dorée `+2` |
+| 🟢 Verte | pomme d'uranium `-1` |
+| 🔵 Bleue | pomme glitchée, inverse les contrôles pendant `1s` |
 
 ---
+
+##  Inspiration
+
+Issu de cette vidéo :  
+https://www.youtube.com/watch?v=lziU_yT0iDc
+
+---
+
+##  Licence
 
 [LICENSE MIT](./LICENSE.md)
+EOF
