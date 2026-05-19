@@ -9,21 +9,26 @@ MENU_OPTION_COLOR = 8
 def draw_box(win):
     h, w = win.getmaxyx()
 
-    # lignes horizontales
-    for x in range(w - 1):
+    # horizontales
+    for x in range(1, w - 1):
         win.addch(0, x, "─")
         win.addch(h - 1, x, "─")
 
-    # lignes verticales
+    # verticales
     for y in range(1, h - 1):
         win.addch(y, 0, "│")
-        win.addch(y, w - 2, "│")
+        win.addch(y, w - 1, "│")
 
     # coins
     win.addch(0, 0, "┌")
-    win.addch(0, w - 2, "┐")
+    win.addch(0, w - 1, "┐")
     win.addch(h - 1, 0, "└")
-    win.addch(h - 1, w - 2, "┘")
+
+    # coin bas droit -> protection curses
+    try:
+        win.addch(h - 1, w - 1, "┘")
+    except curses.error:
+        pass
 
 
 def homeScreen(stdscr):
